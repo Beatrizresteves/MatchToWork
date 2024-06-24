@@ -17,7 +17,7 @@ def service_to_json(service):
 def get_services():
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute('SELECT * FROM service')
+    cur.execute('SELECT * FROM services')
     rows = cur.fetchall()
     services = [Service.from_db_row(row) for row in rows]
     conn.close()

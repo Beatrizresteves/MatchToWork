@@ -55,7 +55,6 @@ def init_db():
             FOREIGN KEY (service_type_id) REFERENCES servicetypes (service_type_id),
             FOREIGN KEY (client_id) REFERENCES users (user_id)
         );
-        CREATE INDEX IF NOT EXISTS idx_service_status ON services (status);
         CREATE INDEX IF NOT EXISTS idx_service_start_date ON services (start_date);
         CREATE INDEX IF NOT EXISTS idx_service_end_date ON services (end_date);
         CREATE INDEX IF NOT EXISTS idx_service_client_id ON services (client_id);

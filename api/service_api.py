@@ -17,7 +17,7 @@ def service_to_json(service):
 def get_services():
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute('SELECT * FROM services')
+    cur.execute('SELECT * FROM service')
     rows = cur.fetchall()
     services = [Service.from_db_row(row) for row in rows]
     conn.close()
@@ -81,7 +81,7 @@ def update_service(service_id):
 def delete_service(service_id):
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute('DELETE FROM services WHERE service_id = %s', (service_id,))
+    cur.execute('DELETE FROM services WHERE service_id = %s', (service_id))
     conn.commit()
     conn.close()
     return jsonify({'message': 'Service deleted'}), 200

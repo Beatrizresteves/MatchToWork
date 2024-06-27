@@ -11,7 +11,7 @@ def user_to_json(user):
         'fullname': user.fullname,
         'cpf': user.cpf,
         'phone_number': user.phone_number,
-        'adress_id': user.adress_id,
+        'address_id': user.address_id,
         'registration_date': user.registration_date,
         'is_active': user.is_active,
     }
@@ -43,6 +43,7 @@ def get_user(user_id):
 def create_user():
     data = request.get_json()
     new_user = User(
+        user_id=None,  # Não passe 'user_id' ao criar um novo usuário
         username=data['username'],
         email=data['email'],
         password=data['password'],

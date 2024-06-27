@@ -27,12 +27,9 @@ def init_db():
             cpf VARCHAR(11) NOT NULL,
             phone_number VARCHAR(15) NOT NULL,
             address_id INTEGER,
-            registration_date TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP AT TIME ZONE 'UTC',
+            registration_date TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
             is_active BOOLEAN DEFAULT TRUE
         );
-        CREATE INDEX IF NOT EXISTS idx_user_username ON users (username);
-        CREATE INDEX IF NOT EXISTS idx_user_email ON users (email);
-        CREATE INDEX IF NOT EXISTS idx_user_cpf ON users (cpf);
     ''')
 
     cur.execute('''
@@ -41,7 +38,6 @@ def init_db():
             name VARCHAR(80) NOT NULL,
             description VARCHAR(200)
         );
-        CREATE INDEX IF NOT EXISTS idx_servicetype_name ON servicetypes (name);
     ''')
 
     cur.execute('''
@@ -49,7 +45,7 @@ def init_db():
             service_id SERIAL PRIMARY KEY,
             service_type_id INTEGER NOT NULL,
             client_id INTEGER NOT NULL,
-            start_date TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP AT TIME ZONE 'UTC',
+            start_date TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
             end_date TIMESTAMPTZ,
             status VARCHAR(20) NOT NULL,
             FOREIGN KEY (service_type_id) REFERENCES servicetypes (service_type_id),
@@ -57,13 +53,12 @@ def init_db():
         );
         CREATE INDEX IF NOT EXISTS idx_service_start_date ON services (start_date);
         CREATE INDEX IF NOT EXISTS idx_service_end_date ON services (end_date);
-        CREATE INDEX IF NOT EXISTS idx_service_client_id ON services (client_id);
-        CREATE INDEX IF NOT EXISTS idx_service_service_type_id ON services (service_type_id);
     ''')
 
     conn.commit()
     cur.close()
     conn.close()
+
 
 
 if __name__ == '__main__':

@@ -12,7 +12,8 @@ def user_to_json(user):
         'cpf': user.cpf,
         'phone_number': user.phone_number,
         'address_id': user.address_id,
-        'registration_date': user.registration_date,
+        'created_at': user.created_at,
+        'update_at': user.update_at,
         'is_active': user.is_active,
     }
 
@@ -20,7 +21,7 @@ def user_to_json(user):
 def get_users():
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute('SELECT * from users')
+    cur.execute('SELECT user_id, username, email, fullname, cpf, phone_number, address_id, created_at, update_at, is_active  from users')
     rows = cur.fetchall()
     users = [User.from_db_row(row) for row in rows]
     conn.close()
@@ -30,7 +31,7 @@ def get_users():
 def get_user(user_id):
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute('SELECT * from users WHERE user_id = %s', (user_id))
+    cur.execute('SELECT user_id, username, email, fullname, cpf, phone_number, address_id, created_at, update_at, is_active from users WHERE user_id = %s', (user_id))
     row = cur.fetchone()
     conn.close()
     if row:
@@ -43,7 +44,7 @@ def get_user(user_id):
 def create_user():
     data = request.get_json()
     new_user = User(
-        user_id=None,  # Não passe 'user_id' ao criar um novo usuário
+        user_id=None,  
         username=data['username'],
         email=data['email'],
         password=data['password'],
@@ -80,7 +81,7 @@ def update_user(user_id):
     ''', (data['username'], data['email'], data['password'], data['fullname'], data['cpf'],
           data['phone_number'], data.get('address_id'), data.get('is_active', True), user_id))
     conn.commit()
-    cur.execute('SELECT * FROM users WHERE user_id = %s', (user_id,))
+    cur.execute('SELECT user_id, username, email, fullname, cpf, phone_number, address_id, created_at, update_at, is_active FROM users WHERE user_id = %s', (user_id,))
     updated_user = User.from_db_row(cur.fetchone())
     conn.close()
     return jsonify(user_to_json(updated_user)), 200

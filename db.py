@@ -27,7 +27,8 @@ def init_db():
             cpf VARCHAR(11) NOT NULL,
             phone_number VARCHAR(15) NOT NULL,
             address_id INTEGER,
-            registration_date TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+            created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+            update_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
             is_active BOOLEAN DEFAULT TRUE
         );
     ''')

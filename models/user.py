@@ -4,7 +4,7 @@ from psycopg2.extras import DateTimeTZRange
 
 class User:
     def __init__(self, user_id, username, email, password, fullname, cpf, phone_number,
-                 address_id=None, registration_date=None, is_active=True):
+                 address_id=None, created_at=None, update_at=None, is_active=True):
         self.user_id = user_id
         self.username = username
         self.email = email
@@ -13,10 +13,11 @@ class User:
         self.cpf = cpf
         self.phone_number = phone_number
         self.address_id = address_id
-        self.registration_date = registration_date or datetime.utcnow()
+        self.created_at = created_at or datetime.utcnow()
+        self.update_at = update_at or datetime.utcnow()
         self.is_active = is_active
 
     @classmethod
     def from_db_row(cls, row):
-        user_id, username, email, password, fullname, cpf, phone_number, address_id, registration_date, is_active = row
-        return cls(user_id, username, email, password, fullname, cpf, phone_number, address_id, registration_date, is_active)
+        user_id, username, email, password, fullname, cpf, phone_number, address_id, created_at, update_at, is_active = row
+        return cls(user_id, username, email, password, fullname, cpf, phone_number, address_id, created_at, update_at, is_active)

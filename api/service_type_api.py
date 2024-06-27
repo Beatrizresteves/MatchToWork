@@ -14,7 +14,7 @@ def service_type_json(service_type):
 def get_services_types():
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute('SELECT * FROM servicetypes')
+    cur.execute('SELECT service_type_id, name, description FROM servicetypes')
     rows = cur.fetchall()
     servicetypes = [ServiceType.from_db_row(row) for row in rows]
     conn.close()
@@ -24,7 +24,7 @@ def get_services_types():
 def get_service_type(service_type_id):
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute('SELECT * FROM servicetypes WHERE service_type_id = %s',
+    cur.execute('SELECT service_type_id, name, description FROM servicetypes FROM servicetypes WHERE service_type_id = %s',
                 (service_type_id))
     row = cur.fetchone()
     conn.close()
@@ -65,7 +65,7 @@ def update_service_type(service_type_id):
         WHERE service_type_id = %s
 	''', (data['name'], data['description']))
     conn.commit()
-    cur.execute('SELECT * FROM servicetypes WHERE service_type_id = %s',
+    cur.execute('SELECT service_type_id, name, description FROM servicetypes WHERE service_type_id = %s',
                 (service_type_id,))
     update_service_type = ServiceType.from_db_row(cur.fetchone())
     conn.close()

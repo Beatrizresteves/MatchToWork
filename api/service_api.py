@@ -17,7 +17,7 @@ def service_to_json(service):
 def get_services():
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute('SELECT * FROM services')
+    cur.execute('SELECT service_id, service_type_id, client_id, start_date, end_date, status FROM services')
     rows = cur.fetchall()
     services = [Service.from_db_row(row) for row in rows]
     conn.close()
@@ -27,7 +27,7 @@ def get_services():
 def get_service(service_id):
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute('SELECT * FROM services WHERE service_id = %s', (service_id,))
+    cur.execute('SELECT service_id, service_type_id, client_id, start_date, end_date, status FROM services WHERE service_id = %s', (service_id,))
     row = cur.fetchone()
     conn.close()
     if row:
@@ -72,7 +72,7 @@ def update_service(service_id):
     ''', (data['service_type_id'], data['client_id'], data['start_date'], data['end_date'],
           data['status'], service_id))
     conn.commit()
-    cur.execute('SELECT * FROM services WHERE service_id = %s', (service_id,))
+    cur.execute('SELECT service_id, service_type_id, client_id, start_date, end_date, status FROM services WHERE service_id = %s', (service_id,))
     updated_service = Service.from_db_row(cur.fetchone())
     conn.close()
     return jsonify(service_to_json(updated_service)), 200

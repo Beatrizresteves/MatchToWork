@@ -1,5 +1,5 @@
 from flask import Blueprint
-from api.service_api import get_services, get_service, create_service, update_service, delete_service
+from api.service_api import get_services, get_service, create_service, patch_service, put_service, delete_service
 
 service_bp = Blueprint('service_api', __name__)
 
@@ -10,6 +10,8 @@ service_bp.add_url_rule('/services/<int:service_id>',
 service_bp.add_url_rule('/services', 'create_service',
                         create_service, methods=['POST'])
 service_bp.add_url_rule('/services/<int:service_id>',
-                        'update_service', update_service, methods=['PUT'])
+                        'update_service', put_service, methods=['PUT'])
+service_bp.add_url_rule('/services/<int:service_id>',
+                        'update_service', patch_service, methods=['PATCH'])
 service_bp.add_url_rule('/services/<int:service_id>',
                         'delete_service', delete_service, methods=['DELETE'])

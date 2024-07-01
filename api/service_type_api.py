@@ -8,7 +8,7 @@ def service_type_json(service_type):
         'service_type_id': service_type.service_type_id,
         'name': service_type.name,
         'description': service_type.description,
-         'update_at': service_type.update_at,
+         'updated_at': service_type.updated_at,
         'is_active': service_type.is_active,
     }
 

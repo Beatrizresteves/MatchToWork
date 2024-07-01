@@ -11,7 +11,7 @@ def service_to_json(service):
         'start_date': service.start_date,
         'end_date': service.end_date,
         'status': service. status,
-        'update_at': service.update_at,
+        'updated_at': service.updated_at,
         'is_active': service.is_active,
     }
 

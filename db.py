@@ -26,7 +26,7 @@ def init_db():
             phone_number VARCHAR(15) NOT NULL,
             address_id INTEGER,
             created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-            update_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
             is_active BOOLEAN DEFAULT TRUE
         );
     ''')
@@ -37,7 +37,7 @@ def init_db():
             name VARCHAR(80) NOT NULL,
             description VARCHAR(200),
             created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-            update_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+            updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
         );
     ''')
 
@@ -50,7 +50,7 @@ def init_db():
             end_date TIMESTAMPTZ,
             status VARCHAR(20) NOT NULL,
             created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-            update_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (service_type_id) REFERENCES servicetypes (service_type_id),
             FOREIGN KEY (client_id) REFERENCES users (user_id)
         );
@@ -59,34 +59,34 @@ def init_db():
     ''')
 
     cur.execute('''
-        CREATE OR REPLACE FUNCTION update_update_at_column()
+        CREATE OR REPLACE FUNCTION update_updated_at_column()
         RETURNS TRIGGER AS $$
         BEGIN
-            NEW.update_at = NOW();
+            NEW.updated_at = NOW();
             RETURN NEW;
         END;
         $$ LANGUAGE plpgsql;
     ''')
 
     cur.execute('''
-        CREATE TRIGGER update_users_update_at
+        CREATE TRIGGER update_users_updated_at
         BEFORE UPDATE ON users
         FOR EACH ROW
-        EXECUTE FUNCTION update_update_at_column();
+        EXECUTE FUNCTION update_updated_at_column();
     ''')
 
     cur.execute('''
-        CREATE TRIGGER update_servicetypes_update_at
+        CREATE TRIGGER update_servicetypes_updated_at
         BEFORE UPDATE ON servicetypes
         FOR EACH ROW
-        EXECUTE FUNCTION update_update_at_column();
+        EXECUTE FUNCTION update_updated_at_column();
     ''')
 
     cur.execute('''
-        CREATE TRIGGER update_services_update_at
+        CREATE TRIGGER update_services_updated_at
         BEFORE UPDATE ON services
         FOR EACH ROW
-        EXECUTE FUNCTION update_update_at_column();
+        EXECUTE FUNCTION update_updated_at_column();
     ''')
 
     conn.commit()

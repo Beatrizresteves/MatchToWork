@@ -7,7 +7,9 @@ def service_type_json(service_type):
     return {
         'service_type_id': service_type.service_type_id,
         'name': service_type.name,
-        'description': service_type.description
+        'description': service_type.description,
+         'update_at': service_type.update_at,
+        'is_active': service_type.is_active,
     }
 
 
@@ -60,7 +62,7 @@ def create_service_type():
     return jsonify(service_type_json(new_service_type)), 201
 
 
-def update_service_type(service_type_id):
+def put_service_type(service_type_id):
     data = request.get_json()
     conn = get_db_connection()
     cur = conn.cursor()
@@ -76,6 +78,38 @@ def update_service_type(service_type_id):
     conn.close()
     return jsonify(service_type_json(update_service_type)), 200
 
+def patch_service_type(service_type_id):
+    data = request.get_json()
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    allowed_fields = ['name', 'description']
+    set_statements = []
+    values = []
+
+    for field in allowed_fields:
+        if field in data:
+            set_statements.append(f"{field} = %s")
+            values.append(data[field])
+
+    if not set_statements:
+        return jsonify({'error': 'No valid fields provided to update.'}), 400
+
+    set_clause = ', '.join(set_statements)
+    values.append(service_type_id)
+
+    cur.execute(f'''
+        UPDATE servicetypes
+        SET {set_clause}
+        WHERE service_type_id = %s
+    ''', values)
+    conn.commit()
+
+    cur.execute('SELECT service_type_id, name, description FROM servicetypes WHERE service_type_id = %s',
+                (service_type_id,))
+    updated_service_type = ServiceType.from_db_row(cur.fetchone())
+    conn.close()
+    return jsonify(service_type_json(updated_service_type)), 200
 
 def delete_service_type(service_type_id):
     conn = get_db_connection()

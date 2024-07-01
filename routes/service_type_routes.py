@@ -10,8 +10,8 @@ service_type_bp.add_url_rule('/servicetypes/<int:service_type_id>',
 service_type_bp.add_url_rule('/servicetypes', 'create_service_type',
                              create_service_type, methods=['POST'])
 service_type_bp.add_url_rule('/servicetypes/<int:service_type_id>',
-                             'update_service_type', put_service_type, methods=['PUT'])
+                             'put_service_type', put_service_type, methods=['PUT'])
 service_type_bp.add_url_rule('/servicetypes/<int:service_type_id>',
-                             'update_service_type', patch_service_type, methods=['PATCH'])
+                             'patch_service_type', patch_service_type, methods=['PATCH'])
 service_type_bp.add_url_rule('/servicetypes/<int:service_type_id>',
                              'delete_service_type', delete_service_type, methods=['DELETE'])

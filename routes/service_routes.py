@@ -10,8 +10,8 @@ service_bp.add_url_rule('/services/<int:service_id>',
 service_bp.add_url_rule('/services', 'create_service',
                         create_service, methods=['POST'])
 service_bp.add_url_rule('/services/<int:service_id>',
-                        'update_service', put_service, methods=['PUT'])
+                        'put_service', put_service, methods=['PUT'])
 service_bp.add_url_rule('/services/<int:service_id>',
-                        'update_service', patch_service, methods=['PATCH'])
+                        'patch_service', patch_service, methods=['PATCH'])
 service_bp.add_url_rule('/services/<int:service_id>',
                         'delete_service', delete_service, methods=['DELETE'])

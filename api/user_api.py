@@ -75,7 +75,7 @@ def create_user():
     return jsonify(user_to_json(new_user)), 201
 
 
-def update_put_user(user_id):
+def put_user(user_id):
     data = request.get_json()
     conn = get_db_connection()
     cur = conn.cursor()
@@ -97,7 +97,7 @@ def update_put_user(user_id):
 
     return jsonify(user_to_json(updated_user)), 200
 
-def update_patch_user(user_id):
+def patch_user(user_id):
     data = request.get_json()
     conn = get_db_connection()
     cur = conn.cursor()

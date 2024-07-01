@@ -33,7 +33,7 @@ def get_users():
 def get_user(user_id):
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute('SELECT user_id, username, email, fullname, cpf, phone_number, address_id, created_at, update_at, is_active from users WHERE user_id = %s', (user_id))
+    cur.execute('SELECT user_id, username, email, fullname, cpf, phone_number, address_id, created_at, update_at, is_active FROM users WHERE user_id = %s', (user_id,))
     row = cur.fetchone()
     conn.close()
     if row:
@@ -46,7 +46,7 @@ def get_user(user_id):
 def create_user():
     data = request.get_json()
     new_user = User(
-        user_id=None,  
+        user_id=None,
         username=data['username'],
         email=data['email'],
         password=data['password'],

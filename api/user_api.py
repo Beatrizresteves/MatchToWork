@@ -1,6 +1,7 @@
 from flask import request, jsonify
 from db import get_db_connection
 from models.user import User
+from datetime import datetime
 
 
 def user_to_json(user):
@@ -74,23 +75,62 @@ def create_user():
     return jsonify(user_to_json(new_user)), 201
 
 
-def update_user(user_id):
+def update_put_user(user_id):
     data = request.get_json()
     conn = get_db_connection()
     cur = conn.cursor()
+
     cur.execute('''
         UPDATE users
         SET username = %s, email = %s, password = %s, fullname = %s, cpf = %s,
-            phone_number = %s, address_id = %s, is_active = %s
+            phone_number = %s, address_id = %s, is_active = %s, update_at = %s
         WHERE user_id = %s
     ''', (data['username'], data['email'], data['password'], data['fullname'], data['cpf'],
-          data['phone_number'], data.get('address_id'), data.get('is_active', True), user_id))
+          data['phone_number'], data.get('address_id'), data.get('is_active', True), datetime.utcnow(), user_id))
+    
     conn.commit()
+
     cur.execute('SELECT user_id, username, email, fullname, cpf, phone_number, address_id, created_at, update_at, is_active FROM users WHERE user_id = %s', (user_id,))
     updated_user = User.from_db_row(cur.fetchone())
+
     conn.close()
+
     return jsonify(user_to_json(updated_user)), 200
 
+def update_patch_user(user_id):
+    data = request.get_json()
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    allowed_fields = ['username', 'email', 'password', 'fullname', 'cpf', 'phone_number', 'address_id', 'is_active']
+
+    set_statements = []
+    values = []
+
+    for field in allowed_fields:
+        if field in data:
+            set_statements.append(f"{field} = %s")
+            values.append(data[field])
+
+    set_statements.append("update_at = %s")
+    values.append(datetime.utcnow())
+
+    values.append(user_id)
+
+    cur.execute('''
+        UPDATE users
+        SET {}
+        WHERE user_id = %s
+    '''.format(', '.join(set_statements)), tuple(values))
+
+    conn.commit()
+
+    cur.execute('SELECT user_id, username, email, fullname, cpf, phone_number, address_id, created_at, update_at, is_active FROM users WHERE user_id = %s', (user_id,))
+    updated_user = User.from_db_row(cur.fetchone())
+
+    conn.close()
+
+    return jsonify(user_to_json(updated_user)), 200
 
 def delete_user(user_id):
     conn = get_db_connection()

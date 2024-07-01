@@ -21,6 +21,9 @@ def user_to_json(user):
 def get_users():
     limit = request.args.get('limit', default=10, type=int)
     offset = request.args.get('offset', default=0, type=int)
+    max_limit = 50
+    if limit > max_limit:
+        limit = 50
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute('SELECT user_id, username, email, fullname, cpf, phone_number, address_id, created_at, update_at, is_active FROM users LIMIT %s OFFSET %s', (limit, offset))

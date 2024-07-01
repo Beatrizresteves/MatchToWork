@@ -5,7 +5,6 @@ from routes.service_type_routes import service_type_bp
 
 app = Flask(__name__)
 
-# Registra o Blueprint das rotas de usuário
 app.register_blueprint(user_bp, url_prefix='/api')
 app.register_blueprint(service_bp, url_prefix='/api')
 app.register_blueprint(service_type_bp, url_prefix='/api')

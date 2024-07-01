@@ -83,7 +83,7 @@ def put_user(user_id):
     cur.execute('''
         UPDATE users
         SET username = %s, email = %s, password = %s, fullname = %s, cpf = %s,
-            phone_number = %s, address_id = %s, is_active = %s, update_at = %s
+            phone_number = %s, address_id = %s, is_active = %s
         WHERE user_id = %s
     ''', (data['username'], data['email'], data['password'], data['fullname'], data['cpf'],
           data['phone_number'], data.get('address_id'), data.get('is_active', True), datetime.utcnow(), user_id))
@@ -112,7 +112,6 @@ def patch_user(user_id):
             set_statements.append(f"{field} = %s")
             values.append(data[field])
 
-    set_statements.append("update_at = %s")
     values.append(datetime.utcnow())
 
     values.append(user_id)

@@ -15,9 +15,14 @@ def service_to_json(service):
 
 
 def get_services():
+    limit = request.args.get('limit', default=10, type=int)
+    offset = request.args.get('offset', default=0, type=int)
+    max_limit = 50
+    if limit > max_limit:
+        limit = 50
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute('SELECT service_id, service_type_id, client_id, start_date, end_date, status FROM services')
+    cur.execute('SELECT service_id, service_type_id, client_id, start_date, end_date, status FROM services LIMIT %s OFFSET %s', (limit, offset))
     rows = cur.fetchall()
     services = [Service.from_db_row(row) for row in rows]
     conn.close()

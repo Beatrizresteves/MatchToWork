@@ -93,7 +93,7 @@ def create_user():
         return jsonify(user_to_json(new_user)), 201
     except Exception as e:
         conn.rollback()
-        conn.close
+        conn.close()
         return log_and_return_error(f"Failed to create user {str(e)}", 500)
 
 
@@ -117,7 +117,7 @@ def put_user(user_id):
 
         conn.close()
 
-        logger.info(f"Updated user")
+        logger.info(f"Updated user {user_id}")
         return jsonify(user_to_json(updated_user)), 200
     except Exception as e:
         conn.rollback()

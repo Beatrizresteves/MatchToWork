@@ -19,7 +19,7 @@ def init_db():
         CREATE TABLE IF NOT EXISTS users (
             user_id SERIAL PRIMARY KEY,
             username VARCHAR(80) NOT NULL,
-            email VARCHAR(80) NOT NULL,
+            email VARCHAR(80) UNIQUE NOT NULL,
             password VARCHAR(128) NOT NULL,
             fullname VARCHAR(80) NOT NULL,
             cpf VARCHAR(11) NOT NULL,

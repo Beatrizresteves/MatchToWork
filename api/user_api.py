@@ -3,6 +3,7 @@ from db import get_db_connection
 from models.user import User
 from datetime import datetime
 from logger_config import configure_logger
+import psycopg2
 
 app = Flask(__name__)
 logger = configure_logger()
@@ -91,10 +92,14 @@ def create_user():
         new_user.user_id = new_user_id
         logger.info(f"Created new user: {new_user_id}")
         return jsonify(user_to_json(new_user)), 201
+    except psycopg2.IntegrityError as e:
+        conn.rollback()
+        conn.close()
+        return jsonify({'error': 'Email already exists'}), 400
     except Exception as e:
         conn.rollback()
         conn.close()
-        return log_and_return_error(f"Failed to create user {str(e)}", 500)
+        return jsonify({'error': f"Failed to create user: {str(e)}"}), 500
 
 
 def put_user(user_id):

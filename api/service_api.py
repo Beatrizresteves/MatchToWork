@@ -1,7 +1,11 @@
-from flask import request, jsonify
+from flask import Flask, request, jsonify
 from db import get_db_connection
 from models.service import Service
+from logger_config import configure_logger
 
+
+app = Flask(__name__)
+logger = configure_logger()
 
 def service_to_json(service):
     return {
@@ -12,9 +16,13 @@ def service_to_json(service):
         'end_date': service.end_date,
         'status': service. status,
         'updated_at': service.updated_at,
+        'created_at': service.created_at,
         'is_active': service.is_active,
     }
 
+def log_and_return_error(message, status_code):
+    logger.error(message)
+    return jsonify({'error': message}), status_code
 
 def get_services():
     limit = request.args.get('limit', default=10, type=int)
@@ -24,25 +32,33 @@ def get_services():
         limit = 50
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute('SELECT service_id, service_type_id, client_id, start_date, end_date, status FROM services LIMIT %s OFFSET %s', (limit, offset))
-    rows = cur.fetchall()
-    services = [Service.from_db_row(row) for row in rows]
-    conn.close()
-    return jsonify([service_to_json(service) for service in services]), 200
-
+    try:
+        cur.execute('SELECT service_id, service_type_id, client_id, start_date, end_date, status FROM services LIMIT %s OFFSET %s', (limit, offset))
+        rows = cur.fetchall()
+        services = [Service.from_db_row(row) for row in rows]
+        conn.close()
+        logger.info(f"Fetched {len(services)} services.")
+        return jsonify([service_to_json(service) for service in services]), 200
+    except Exception as e:
+        conn.close()
+        return log_and_return_error(f"Failed to fetch services: {str(e)}", 500)
 
 def get_service(service_id):
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute('SELECT service_id, service_type_id, client_id, start_date, end_date, status FROM services WHERE service_id = %s', (service_id,))
-    row = cur.fetchone()
-    conn.close()
-    if row:
-        service = Service.from_db_row(row)
-        return jsonify(service_to_json(service)), 200
-    else:
-        return jsonify({'error': 'Service not found'}), 404
-
+    try:
+        cur.execute('SELECT service_id, service_type_id, client_id, start_date, end_date, status FROM services WHERE service_id = %s', (service_id,))
+        row = cur.fetchone()
+        conn.close()
+        if row:
+            service = Service.from_db_row(row)
+            logger.info(f"Fetched to service: {service_id}")
+            return jsonify(service_to_json(service)), 200
+        else:
+            return log_and_return_error(f"Service {service_id} not found", 404)
+    except Exception as e:
+        conn.close()
+        return log_and_return_error(f"Failed to fetch service {service_id}: {str(e)}", 500)
 
 def create_service():
     data = request.get_json()
@@ -56,34 +72,45 @@ def create_service():
     )
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute('''
-        INSERT INTO services (service_type_id, client_id, start_date, end_date, status)
-        VALUES (%s, %s, %s, %s, %s)
-        RETURNING service_id
-    ''', (new_service.service_type_id, new_service.client_id, new_service.start_date,
-          new_service.end_date, new_service.status))
-    new_service.service_id = cur.fetchone()[0]
-    conn.commit()
-    conn.close()
-    return jsonify(service_to_json(new_service)), 201
-
+    try:
+        cur.execute('''
+            INSERT INTO services (service_type_id, client_id, start_date, end_date, status)
+            VALUES (%s, %s, %s, %s, %s)
+            RETURNING service_id
+        ''', (new_service.service_type_id, new_service.client_id, new_service.start_date,
+            new_service.end_date, new_service.status))
+        new_service.service_id = cur.fetchone()[0]
+        conn.commit()
+        conn.close()
+        logger.info(f"Created new service: {new_service.service_id}")
+        return jsonify(service_to_json(new_service)), 201
+    except Exception as e:
+        conn.rollback()
+        conn.close()
+        return log_and_return_error(f"Failed to create service {str(e)}", 500)
 
 def put_service(service_id):
     data = request.get_json()
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute('''
-        UPDATE services
-        SET service_type_id = %s, client_id = %s, start_date = %s, end_date = %s, status = %s
-        WHERE service_id = %s
-    ''', (data['service_type_id'], data['client_id'], data['start_date'], data['end_date'],
-          data['status'], service_id))
-    conn.commit()
-    cur.execute('SELECT service_id, service_type_id, client_id, start_date, end_date, status FROM services WHERE service_id = %s', (service_id,))
-    updated_service = Service.from_db_row(cur.fetchone())
-    conn.close()
-    return jsonify(service_to_json(updated_service)), 200
-
+    try:
+        cur.execute('''
+            UPDATE services
+            SET service_type_id = %s, client_id = %s, start_date = %s, end_date = %s, status = %s
+            WHERE service_id = %s
+        ''', (data['service_type_id'], data['client_id'], data['start_date'], data['end_date'],
+            data['status'], service_id))
+        conn.commit()
+        cur.execute('SELECT service_id, service_type_id, client_id, start_date, end_date, status FROM services WHERE service_id = %s', (service_id,))
+        updated_service = Service.from_db_row(cur.fetchone())
+        conn.close()
+        logger.info(f"Update service {service_id}")
+        return jsonify(service_to_json(updated_service)), 200
+    except Exception as e:
+        conn.rollback()
+        conn.close()
+        return log_and_return_error(f"Failed update service {service_id}: {str(e)}", 500)
+    
 def patch_service(service_id):
     data = request.get_json()
     allowed_fields = ['service_type_id', 'client_id', 'start_date', 'end_date', 'status']
@@ -109,17 +136,32 @@ def patch_service(service_id):
     
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute(update_query, tuple(values))
-    conn.commit()
-    cur.execute('SELECT service_id, service_type_id, client_id, start_date, end_date, status, updated_at FROM services WHERE service_id = %s', (service_id,))
-    updated_service = Service.from_db_row(cur.fetchone())
-    conn.close()
-    return jsonify(service_to_json(updated_service)), 200
-
+    try:
+        cur.execute(update_query, tuple(values))
+        conn.commit()
+        cur.execute('SELECT service_id, service_type_id, client_id, start_date, end_date, status, updated_at FROM services WHERE service_id = %s', (service_id,))
+        updated_service = Service.from_db_row(cur.fetchone())
+        conn.close()
+        logger.info(f"Patched service: {service_id}")
+        return jsonify(service_to_json(updated_service)), 200
+    except Exception as e:
+        conn.rollback()
+        conn.close()
+        return log_and_return_error(f"Failed patch service {service_id}: {str(e)}", 500)
+    
 def delete_service(service_id):
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute('DELETE FROM services WHERE service_id = %s', (service_id))
-    conn.commit()
-    conn.close()
-    return jsonify({'message': 'Service deleted'}), 200
+    try:
+        cur.execute('DELETE FROM services WHERE service_id = %s', (service_id))
+        conn.commit()
+        conn.close()
+        logger.info(f"Delete service {service_id}")
+        return jsonify({'message': 'Service deleted'}), 200
+    except Exception as e:
+        conn.rollback()
+        conn.close()
+        return log_and_return_error(f"Failed to delete service {service_id}: {str(e)}", 500)
+    
+if __name__ == '__main__':
+    app.run(debug=True)

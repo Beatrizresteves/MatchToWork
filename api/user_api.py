@@ -18,12 +18,18 @@ def user_to_json(user):
         'phone_number': user.phone_number,
         'address_id': user.address_id,
         'created_at': user.created_at,
-        'updated_at': user.updated_at,
+        'updated_at': user.updated_at, 
         'is_active': user.is_active,
     }
 
-def log_and_return_error(message, status_code):
-    logger.error(message)
+def log_and_return_error(message, status_code, user_id=None):
+    log_info = {
+        'request': f"{request.method} {request.path}",
+        'status': status_code,
+        'user_id': user_id,
+        
+    }
+    logger.error(message, extra=log_info)
     return jsonify({'error': message}), status_code
 
 def get_users():
@@ -39,30 +45,35 @@ def get_users():
         rows = cur.fetchall()
         users = [User.from_db_row(row) for row in rows]
         conn.close()
-        logger.info(f"Fetched {len(users)} users.")
+        logger.debug("Fetched users.", extra={
+            'request': f"{request.method} {request.path}",
+            'status': 200,
+        })
         return jsonify([user_to_json(user) for user in users]), 200
     except Exception as e:
         conn.close()
         return log_and_return_error(f"Failed to fetch users: {str(e)}", 500)
-
-
+    
 def get_user(user_id):
     conn = get_db_connection()
     cur = conn.cursor()
-    try:        
+    try:
         cur.execute('SELECT user_id, username, email, fullname, cpf, phone_number, address_id, created_at, updated_at, is_active FROM users WHERE user_id = %s', (user_id,))
         row = cur.fetchone()
         conn.close()
         if row:
             user = User.from_db_row(row)
-            logger.info(f"Fetched user:{user_id}")
+            logger.debug("Fetched user.", extra={
+                'request': f"{request.method} {request.path}",
+                'status': 200,
+                'user_id': user_id,
+            })
             return jsonify(user_to_json(user)), 200
         else:
-            return log_and_return_error(f"User {user_id} not found", 404)
+            return log_and_return_error(f"User not found", 404)
     except Exception as e:
         conn.close()
-        return log_and_return_error(f"Failed to fetch user {user_id}: {str(e)}", 500)
-
+        return log_and_return_error(f"Failed to fetch user {str(e)}", 500, user_id=user_id)
 
 def create_user():
     data = request.get_json()
@@ -85,12 +96,16 @@ def create_user():
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING user_id
         ''', (new_user.username, new_user.email, new_user.password, new_user.fullname, new_user.cpf,
-            new_user.phone_number, new_user.address_id, new_user.is_active))
+              new_user.phone_number, new_user.address_id, new_user.is_active))
         new_user_id = cur.fetchone()[0]
         conn.commit()
         conn.close()
         new_user.user_id = new_user_id
-        logger.info(f"Created new user: {new_user_id}")
+        logger.debug("Created new user.", extra={
+            'request': f"{request.method} {request.path}",
+            'status': 201,
+            'user_id': new_user_id,
+        })
         return jsonify(user_to_json(new_user)), 201
     except psycopg2.IntegrityError as e:
         conn.rollback()
@@ -99,8 +114,7 @@ def create_user():
     except Exception as e:
         conn.rollback()
         conn.close()
-        return jsonify({'error': f"Failed to create user: {str(e)}"}), 500
-
+        return log_and_return_error(f"Failed to create user: {str(e)}"), 500
 
 def put_user(user_id):
     data = request.get_json()
@@ -113,7 +127,7 @@ def put_user(user_id):
                 phone_number = %s, address_id = %s, is_active = %s
             WHERE user_id = %s
         ''', (data['username'], data['email'], data['password'], data['fullname'], data['cpf'],
-            data['phone_number'], data.get('address_id'), data.get('is_active', True), datetime.utcnow(), user_id))
+              data['phone_number'], data.get('address_id'), data.get('is_active', True), user_id))
         
         conn.commit()
 
@@ -122,12 +136,17 @@ def put_user(user_id):
 
         conn.close()
 
-        logger.info(f"Updated user {user_id}")
+        logger.debug("Updated user.", extra={
+            'request': f"{request.method} {request.path}",
+            'status': 200,
+            'user_id': user_id,
+        })
         return jsonify(user_to_json(updated_user)), 200
     except Exception as e:
         conn.rollback()
         conn.close()
-        return log_and_return_error(f"Failed updated user {user_id}: {str(e)}", 500)
+        return log_and_return_error(f"Failed updated user {user_id}: {str(e)}"), 500
+
 
 def patch_user(user_id):
     data = request.get_json()
@@ -145,14 +164,13 @@ def patch_user(user_id):
                 values.append(data[field])
 
         values.append(datetime.utcnow())
-
         values.append(user_id)
 
-        cur.execute('''
+        cur.execute(f'''
             UPDATE users
-            SET {}
+            SET {', '.join(set_statements)}, updated_at = %s
             WHERE user_id = %s
-        '''.format(', '.join(set_statements)), tuple(values))
+        ''', tuple(values))
 
         conn.commit()
 
@@ -160,12 +178,21 @@ def patch_user(user_id):
         updated_user = User.from_db_row(cur.fetchone())
 
         conn.close()
-        logger.info(f"Patched user: {user_id}")
+        logger.info("Patched user.", extra={
+            'agent': request.headers.get('User-Agent'),
+            'client': request.remote_addr,
+            'compression': request.headers.get('Accept-Encoding'),
+            'referer': request.referrer,
+            'request': f"{request.method} {request.path}",
+            'size': request.content_length,
+            'status': 200,
+            'user': request.headers.get('X-User', 'Unknown')
+        })
         return jsonify(user_to_json(updated_user)), 200
     except Exception as e:
         conn.rollback()
         conn.close()
-        return log_and_return_error(f"Failed patch user {user_id}: {str(e)}", 500)
+        return log_and_return_error(f"Failed patched user {user_id}: {str(e)}", 500)
 
 def delete_user(user_id):
     conn = get_db_connection()
@@ -174,7 +201,16 @@ def delete_user(user_id):
         cur.execute('DELETE FROM users WHERE user_id = %s', (user_id,))
         conn.commit()
         conn.close()
-        logger.info(f"Delete user {user_id}")
+        logger.info("Deleted user.", extra={
+            'agent': request.headers.get('User-Agent'),
+            'client': request.remote_addr,
+            'compression': request.headers.get('Accept-Encoding'),
+            'referer': request.referrer,
+            'request': f"{request.method} {request.path}",
+            'size': request.content_length,
+            'status': 200,
+            'user': request.headers.get('X-User', 'Unknown')
+        })
         return jsonify({'message': 'User deleted'}), 200
     except Exception as e:
         conn.rollback()

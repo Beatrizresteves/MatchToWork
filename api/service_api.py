@@ -26,8 +26,7 @@ def log_and_return_error(message, status_code, service_id=None):
     log_info = {
         'request': f"{request.method} {request.path}",
         'status': status_code,
-        'service_id': service_id,
-        
+        'service_id': service_id,  
     }
     logger.error(message, extra=log_info)
     return jsonify({'error': message}), status_code
@@ -63,10 +62,10 @@ def get_service(service_id):
         conn.close()
         if row:
             service = Service.from_db_row(row)
-            logger.info(f"Fetched to service.", extra={
+            logger.debug(f"Fetched to service.", extra={
                 'request': f"{request.method} {request.path}",
                 'status': 200,
-                'user_id': service_id,
+                'service_id': service_id,
             })
             return jsonify(service_to_json(service)), 200
         else:

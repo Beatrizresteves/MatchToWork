@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from db import get_db_connection
 from models.servicetype import ServiceType
 from logger_config import configure_logger
+from datetime import datetime
 
 app = Flask(__name__)
 logger = configure_logger()
@@ -14,9 +15,13 @@ def service_type_json(service_type):
         'updated_at': service_type.updated_at,
         'is_active': service_type.is_active,
     }
-
-def log_and_return_error(message, status_code):
-    logger.error(message)
+def log_and_return_error(message, status_code, service_type_id=None):
+    log_info = {
+        'request': f"{request.method} {request.path}",
+        'status': status_code,
+        'service_type_id': service_type_id,  
+    }
+    logger.error(message, extra=log_info)
     return jsonify({'error': message}), status_code
 
 def get_services_types():
@@ -32,7 +37,10 @@ def get_services_types():
         rows = cur.fetchall()
         servicetypes = [ServiceType.from_db_row(row) for row in rows]
         conn.close()
-        logger.info(f"Fetched {len(servicetypes)}servicetypes.")
+        logger.debug(f"Fetched {len(servicetypes)}servicetypes.", extra={
+            'request': f"{request.method} {request.path}",
+            'status': 200,
+        })
         return jsonify([service_type_json(service_type) for service_type in servicetypes]), 200
     except Exception as e:
         conn.close()
@@ -48,13 +56,17 @@ def get_service_type(service_type_id):
         conn.close()
         if row:
             service = ServiceType.from_db_row(row)
-            logger.info(f"Fetched service type {service_type_id}")
+            logger.debug(f"Fetched service type.", extra={
+                'request': f"{request.method} {request.path}",
+                'status': 200,
+                'service_type_id': service_type_id,
+            })
             return jsonify(service_type_json(service)), 200
         else:
-            return log_and_return_error(f"Service type {service_type_id} not found", 404)
+            return log_and_return_error(f"Service type not found", 404, service_type_id=service_type_id)
     except Exception as e:
         conn.close()
-        log_and_return_error(f"Failed to fetch {service_type_id} service type: {str(e)}")
+        log_and_return_error(f"Failed to fetch service type: {str(e)}", 500, service_type_id)
 
 
 def create_service_type():
@@ -75,7 +87,11 @@ def create_service_type():
         new_service_type.service_type_id = cur.fetchone()[0]
         conn.commit()
         conn.close()
-        logger.info(f"Created new service type: {new_service_type.service_type_id}")
+        logger.debug(f"Created new service type.", extra={
+            'request': f"{request.method} {request.path}",
+            'status': 201,
+            'service_type_id': new_service_type.service_type_id,
+        })
         return jsonify(service_type_json(new_service_type)), 201
     except Exception as e:
         conn.rollback()
@@ -97,12 +113,16 @@ def put_service_type(service_type_id):
                     (service_type_id,))
         update_service_type = ServiceType.from_db_row(cur.fetchone())
         conn.close()
-        logger.info(f"Updated service type {service_type_id}")
+        logger.debug(f"Updated service type",   extra={
+            'request': f"{request.method} {request.path}",
+            'status': 200,
+            'service_type_id': service_type_id,
+        })
         return jsonify(service_type_json(update_service_type)), 200
     except Exception as e:
         conn.rollback()
         conn.close()
-        return log_and_return_error(f"Failed updated user {service_type_id}: {str(e)}", 500)
+        return log_and_return_error(f"Failed updated service type. {str(e)}", 500, service_type_id=service_type_id)
     
 def patch_service_type(service_type_id):
     data = request.get_json()
@@ -135,12 +155,16 @@ def patch_service_type(service_type_id):
                     (service_type_id,))
         updated_service_type = ServiceType.from_db_row(cur.fetchone())
         conn.close()
-        logger.info(f"Patched service type: {service_type_id}")
+        logger.debug(f"Patch service type",   extra={
+            'request': f"{request.method} {request.path}",
+            'status': 200,
+            'service_type_id': service_type_id,
+        })
         return jsonify(service_type_json(updated_service_type)), 200
     except Exception as e:
         conn.rollback()
         conn.close()
-        return log_and_return_error(f"Failed patch service type {service_type_id}: {str(e)}", 500)
+        return log_and_return_error(f"Failed patch service type. {str(e)}", 500, service_type_id=service_type_id)
     
 def delete_service_type(service_type_id):
     conn = get_db_connection()
@@ -150,11 +174,16 @@ def delete_service_type(service_type_id):
             'DELETE FROM servicetypes WHERE service_type_id = %s', (service_type_id))
         conn.commit()
         conn.close()
+        logger.debug(f"Delete service type.",   extra={
+            'request': f"{request.method} {request.path}",
+            'status': 200,
+            'service_type_id': service_type_id,
+        })
         return jsonify({'message': 'ServiceType deleted'}), 200
     except Exception as e:
         conn.rollback()
         conn.close()
-        return log_and_return_error(f"Failed to delete service type {service_type_id}: {str(e)}", 500)
+        return log_and_return_error(f"Failed to delete service type. {str(e)}", 500, service_type_id=service_type_id)
     
 
 if __name__ == '__main__':

@@ -70,7 +70,7 @@ def get_user(user_id):
             })
             return jsonify(user_to_json(user)), 200
         else:
-            return log_and_return_error(f"User not found", 404)
+            return log_and_return_error(f"User not found", 404, user_id=user_id)
     except Exception as e:
         conn.close()
         return log_and_return_error(f"Failed to fetch user {str(e)}", 500, user_id=user_id)
@@ -145,8 +145,7 @@ def put_user(user_id):
     except Exception as e:
         conn.rollback()
         conn.close()
-        return log_and_return_error(f"Failed updated user {user_id}: {str(e)}"), 500
-
+        return log_and_return_error(f"Failed updated user. {str(e)}", 500, user_id=user_id)
 
 def patch_user(user_id):
     data = request.get_json()
@@ -178,21 +177,16 @@ def patch_user(user_id):
         updated_user = User.from_db_row(cur.fetchone())
 
         conn.close()
-        logger.info("Patched user.", extra={
-            'agent': request.headers.get('User-Agent'),
-            'client': request.remote_addr,
-            'compression': request.headers.get('Accept-Encoding'),
-            'referer': request.referrer,
+        logger.debug("Patch user.", extra={
             'request': f"{request.method} {request.path}",
-            'size': request.content_length,
             'status': 200,
-            'user': request.headers.get('X-User', 'Unknown')
+            'user_id': user_id,
         })
         return jsonify(user_to_json(updated_user)), 200
     except Exception as e:
         conn.rollback()
         conn.close()
-        return log_and_return_error(f"Failed patched user {user_id}: {str(e)}", 500)
+        return log_and_return_error(f"Failed patched user: {str(e)}", 500, user_id=user_id)
 
 def delete_user(user_id):
     conn = get_db_connection()
@@ -201,21 +195,16 @@ def delete_user(user_id):
         cur.execute('DELETE FROM users WHERE user_id = %s', (user_id,))
         conn.commit()
         conn.close()
-        logger.info("Deleted user.", extra={
-            'agent': request.headers.get('User-Agent'),
-            'client': request.remote_addr,
-            'compression': request.headers.get('Accept-Encoding'),
-            'referer': request.referrer,
+        logger.debug("Delete user.", extra={
             'request': f"{request.method} {request.path}",
-            'size': request.content_length,
             'status': 200,
-            'user': request.headers.get('X-User', 'Unknown')
+            'user_id': user_id,
         })
         return jsonify({'message': 'User deleted'}), 200
     except Exception as e:
         conn.rollback()
         conn.close()
-        return log_and_return_error(f"Failed to delete user {user_id}: {str(e)}", 500)
+        return log_and_return_error(f"Failed to delete user: {str(e)}", 500, user_id=user_id)
 
 if __name__ == '__main__':
     app.run(debug=True)

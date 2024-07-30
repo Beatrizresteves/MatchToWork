@@ -13,9 +13,15 @@ class User:
         self.cpf = cpf
         self.phone_number = phone_number
         self.address_id = address_id
-        self.created_at = created_at or datetime.utcnow()
-        self.updated_at = updated_at or datetime.utcnow()
-        self.is_active = is_active
+        # self.created_at = created_at or datetime.utcnow()
+        # self.updated_at = updated_at or datetime.utcnow()
+        # self.is_active = is_active
+
+    def __eq__(self, other):
+        if isinstance(other, User):
+            return self.user_id == other.user_id and self.username == other.username
+
+        return False
 
     @classmethod
     def from_db_row(cls, row):

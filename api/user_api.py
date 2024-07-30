@@ -3,10 +3,24 @@ from db import get_db_connection
 from models.user import User
 from datetime import datetime
 from logger_config import configure_logger
+from repository.user_repository import IRepository
 import psycopg2
 
 app = Flask(__name__)
 logger = configure_logger()
+
+class Endpoints:
+    def __init__(self, repository: IRepository):
+        self.repository = repository
+
+    def get_users(self):
+        limit = request.args.get('limit', default=10, type=int)
+        offset = request.args.get('offset', default=0, type=int)
+
+        users = self.repository.get_users(limit, offset)
+
+        return users, 200
+        # return jsonify([user_to_json(user) for user in users]), 200
 
 def user_to_json(user):
     return {

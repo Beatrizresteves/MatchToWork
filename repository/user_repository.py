@@ -11,7 +11,10 @@ class IRepository:
   @abstractmethod
   def get_users(self, limit: int, offset: int) -> List[User]:
     pass
-
+  
+  @abstractmethod
+  def add_user(self, user: User) -> User:
+    pass
 
 class Repository(IRepository):
   def __init__(self):

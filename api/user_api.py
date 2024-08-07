@@ -13,14 +13,15 @@ class Endpoints:
     def __init__(self, repository: IRepository):
         self.repository = repository
 
-    def get_users(self):
-        limit = request.args.get('limit', default=10, type=int)
-        offset = request.args.get('offset', default=0, type=int)
-
+    def get_users(self, limit: int = 10, offset: int = 0):
         users = self.repository.get_users(limit, offset)
-
-        return users, 200
-        # return jsonify([user_to_json(user) for user in users]), 200
+        status = 200
+        return users, status
+    
+    def create_user(self,user: User):
+        self.repository.add_user(user)
+        return user, 201
+    
 
 def user_to_json(user):
     return {

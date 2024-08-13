@@ -21,13 +21,11 @@ class MockRepository(IRepository):
 
     def patch_user(self, user: User) -> User:
         for idx, u in enumerate(self.users):
-            if u.id == user.id:
+            if u.user_id == user.user_id:
                 if user.username is not None:
                     u.username = user.username
                 if user.email is not None:
                     u.email = user.email
-                if user.password is not None:
-                    u.password = user.password
                 if user.fullname is not None:
                     u.fullname = user.fullname
                 if user.cpf is not None:
@@ -40,10 +38,18 @@ class MockRepository(IRepository):
 
     def put_user(self, user: User) -> User:
         for idx, u in enumerate(self.users):
-            if u.id == user.id:
+            if u.user_id == user.user_id:
                 self.users[idx] = user
                 return user
         return None
+    
+    def delete_user(self, user_id: int) -> dict:
+        user_to_delete = next((u for u in self.users if u.user_id == user_id), None)
+        if user_to_delete:
+            self.users.remove(user_to_delete)
+            return {"message": "User deleted successfully"}
+        else:
+            return {"message": "User not found"}
     
 class TestEndpoints(unittest.TestCase):
     def setUp(self):
@@ -62,32 +68,39 @@ class TestEndpoints(unittest.TestCase):
         self.assertEqual(users, expected, "should return 2 users")
         
     def test_create_user(self):
-      new_user =  User(3, "beatrizramalho", "beatrizramalho.esteves@gmail.com", "963852", "Beatriz Ramalho", "3399999", "33 9999999")
-      user, status = self.endpoints.create_user(new_user)
-      self.assertEqual(status, 201, "should return Created code")
-      self.assertEqual(user, new_user, "should return the created user")
-      self.assertIn(new_user, self.endpoints.repository.users, "new user should be in repository")
+        new_user = User(3, "beatrizramalho", "beatrizramalho.esteves@gmail.com", "963852", "Beatriz Ramalho", "3399999", "33 9999999")
+        user, status = self.endpoints.create_user(new_user)
+        self.assertEqual(status, 201, "should return Created code")
+        self.assertEqual(user, new_user, "should return the created user")
+        self.assertIn(new_user, self.endpoints.repository.users, "new user should be in repository")
       
     def test_patch_user(self):
         user = User(2, "beatrizramalho", "beatrizramalho.esteves@gmail.com", "963852", "Beatriz Ramalho", "3399999", "33 9999999")
-        user, status = self.endpoints.patch_user(user)
-        self.assertEqual(status, 200, "should return Created code")
-        self.assertEqual(user, user, "should return the patched user")
-        self.assertIn(user, self.endpoints.repository.users, "patched user should be in repository")
+        updated_user, status = self.endpoints.patch_user(user)
+        self.assertEqual(status, 200, "should return OK code")
+        self.assertEqual(updated_user, user, "should return the patched user")
+        self.assertIn(updated_user, self.endpoints.repository.users, "patched user should be in repository")
 
     def test_put_user(self):
         user = User(2, "beatrizramalho", "beatrizramalho.esteves@gmail.com", "963852", "Beatriz Ramalho", "3399999", "33 9999999")
-        user, status = self.endpoints.put_user(user)
+        updated_user, status = self.endpoints.put_user(user)
         self.assertEqual(status, 200, "should return OK code")
-        self.assertEqual(user, user, "should return the replaced user")
-        self.assertIn(user, self.endpoints.repository.users, "replaced user should be in repository")
-        
+        self.assertEqual(updated_user, user, "should return the replaced user")
+        self.assertIn(updated_user, self.endpoints.repository.users, "replaced user should be in repository")
+
     def test_delete_user(self):
         user_id_to_delete = 2
         response, status = self.endpoints.delete_user(user_id_to_delete)
         self.assertEqual(status, 200, "should return OK code")
         self.assertEqual(response, {"message": "User deleted successfully"}, "should return successful deletion message")
         self.assertNotIn(user_id_to_delete, [u.user_id for u in self.endpoints.repository.users], "user should be removed from repository")
-        
+
+    def test_delete_user_not_found(self):
+        user_id_to_delete = 999  # Assuming this ID does not exist
+        response, status = self.endpoints.delete_user(user_id_to_delete)
+        self.assertEqual(status, 404, "should return Not Found code")
+        self.assertEqual(response, {"message": "User not found"}, "should return user not found message")
+
+            
 if __name__ == "__main__":
     unittest.main()

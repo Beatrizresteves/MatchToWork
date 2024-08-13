@@ -30,13 +30,13 @@ class Endpoints:
         updated_user = self.repository.put_user(user)
         return updated_user, 200
     
-    def delete_user(self, user_id: int):
-        success = self.repository.delete_user(user_id)
-        if success:
-            return {"message": "User deleted successfully"}, 200
+    def delete_user(self, user_id: int) -> tuple:
+        result = self.repository.delete_user(user_id)
+        if "deleted" in result.get("message", "").lower():
+            return result, 200
         else:
-            return {"message": "User not found"}, 404
-
+            return result, 404
+        
 def user_to_json(user):
     return {
         'user_id': user.user_id,

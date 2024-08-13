@@ -20,11 +20,30 @@ class MockRepository(IRepository):
         return user
 
     def patch_user(self, user: User) -> User:
-        for i, existing_user in enumerate(self.users):
-            if existing_user.id == user.id:
-                self.users[i] = user
+        for idx, u in enumerate(self.users):
+            if u.id == user.id:
+                if user.username is not None:
+                    u.username = user.username
+                if user.email is not None:
+                    u.email = user.email
+                if user.password is not None:
+                    u.password = user.password
+                if user.fullname is not None:
+                    u.fullname = user.fullname
+                if user.cpf is not None:
+                    u.cpf = user.cpf
+                if user.phone_number is not None:
+                    u.phone_number = user.phone_number
+                return u
+        return None
+
+
+    def put_user(self, user: User) -> User:
+        for idx, u in enumerate(self.users):
+            if u.id == user.id:
+                self.users[idx] = user
                 return user
-        raise ValueError("User not found")
+        return None
     
 class TestEndpoints(unittest.TestCase):
     def setUp(self):
@@ -49,15 +68,19 @@ class TestEndpoints(unittest.TestCase):
       self.assertEqual(user, new_user, "should return the created user")
       self.assertIn(new_user, self.endpoints.repository.users, "new user should be in repository")
       
-def test_patch_user(self):
-        updated_user = User(2, "beatrizramalho", "beatrizramalho.esteves@gmail.com", "963852", "Beatriz Ramalho", "3399999", "33 9999999")
-        user, status = self.endpoints.patch_user(updated_user)
+    def test_patch_user(self):
+        user = User(2, "beatrizramalho", "beatrizramalho.esteves@gmail.com", "963852", "Beatriz Ramalho", "3399999", "33 9999999")
+        user, status = self.endpoints.patch_user(user)
+        self.assertEqual(status, 200, "should return Created code")
+        self.assertEqual(user, user, "should return the patched user")
+        self.assertIn(user, self.endpoints.repository.users, "patched user should be in repository")
+
+    def test_put_user(self):
+        user = User(2, "beatrizramalho", "beatrizramalho.esteves@gmail.com", "963852", "Beatriz Ramalho", "3399999", "33 9999999")
+        user, status = self.endpoints.put_user(user)
         self.assertEqual(status, 200, "should return OK code")
-        self.assertEqual(user, updated_user, "should return the updated user")
+        self.assertEqual(user, user, "should return the replaced user")
+        self.assertIn(user, self.endpoints.repository.users, "replaced user should be in repository")
         
-        repository_user = next((u for u in self.endpoints.repository.users if u.id == updated_user.id), None)
-        self.assertIsNotNone(repository_user, "updated user should be in repository")
-        self.assertEqual(repository_user, updated_user, "repository user should match updated user")
-    
 if __name__ == "__main__":
     unittest.main()

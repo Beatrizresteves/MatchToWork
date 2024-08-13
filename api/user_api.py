@@ -25,6 +25,10 @@ class Endpoints:
     def patch_user(self, user: User):
         updated_user = self.repository.patch_user(user)
         return updated_user, 200
+    
+    def put_user(self, user: User):
+        updated_user = self.repository.put_user(user)
+        return updated_user, 200
 
 def user_to_json(user):
     return {

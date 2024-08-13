@@ -19,6 +19,10 @@ class IRepository:
   @abstractmethod
   def patch_user(self, user: User) -> User:
     pass
+  
+  @abstractmethod
+  def put_user(self, user: User) -> User:
+    pass
 
 class Repository(IRepository):
   def __init__(self):

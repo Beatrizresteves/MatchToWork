@@ -23,6 +23,10 @@ class IRepository:
   @abstractmethod
   def put_user(self, user: User) -> User:
     pass
+  
+  @abstractmethod
+  def delete_user(self, user_id: int) -> bool:
+    pass
 
 class Repository(IRepository):
   def __init__(self):

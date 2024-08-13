@@ -82,5 +82,12 @@ class TestEndpoints(unittest.TestCase):
         self.assertEqual(user, user, "should return the replaced user")
         self.assertIn(user, self.endpoints.repository.users, "replaced user should be in repository")
         
+    def test_delete_user(self):
+        user_id_to_delete = 2
+        response, status = self.endpoints.delete_user(user_id_to_delete)
+        self.assertEqual(status, 200, "should return OK code")
+        self.assertEqual(response, {"message": "User deleted successfully"}, "should return successful deletion message")
+        self.assertNotIn(user_id_to_delete, [u.user_id for u in self.endpoints.repository.users], "user should be removed from repository")
+        
 if __name__ == "__main__":
     unittest.main()

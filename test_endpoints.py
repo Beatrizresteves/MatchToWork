@@ -19,6 +19,13 @@ class MockRepository(IRepository):
         self.users.append(user)
         return user
 
+    def patch_user(self, user: User) -> User:
+        for i, existing_user in enumerate(self.users):
+            if existing_user.id == user.id:
+                self.users[i] = user
+                return user
+        raise ValueError("User not found")
+    
 class TestEndpoints(unittest.TestCase):
     def setUp(self):
         mock = MockRepository()
@@ -41,6 +48,16 @@ class TestEndpoints(unittest.TestCase):
       self.assertEqual(status, 201, "should return Created code")
       self.assertEqual(user, new_user, "should return the created user")
       self.assertIn(new_user, self.endpoints.repository.users, "new user should be in repository")
+      
+def test_patch_user(self):
+        updated_user = User(2, "beatrizramalho", "beatrizramalho.esteves@gmail.com", "963852", "Beatriz Ramalho", "3399999", "33 9999999")
+        user, status = self.endpoints.patch_user(updated_user)
+        self.assertEqual(status, 200, "should return OK code")
+        self.assertEqual(user, updated_user, "should return the updated user")
+        
+        repository_user = next((u for u in self.endpoints.repository.users if u.id == updated_user.id), None)
+        self.assertIsNotNone(repository_user, "updated user should be in repository")
+        self.assertEqual(repository_user, updated_user, "repository user should match updated user")
     
 if __name__ == "__main__":
     unittest.main()

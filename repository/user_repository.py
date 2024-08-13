@@ -15,6 +15,10 @@ class IRepository:
   @abstractmethod
   def add_user(self, user: User) -> User:
     pass
+  
+  @abstractmethod
+  def patch_user(self, user: User) -> User:
+    pass
 
 class Repository(IRepository):
   def __init__(self):

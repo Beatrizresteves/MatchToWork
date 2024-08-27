@@ -3,10 +3,45 @@ from db import get_db_connection
 from models.servicetype import ServiceType
 from logger_config import configure_logger
 from datetime import datetime
+from repository.service_type_repository import IServiceTypeRepository
+
 
 app = Flask(__name__)
 logger = configure_logger()
 
+class Endpoints:
+    def __init__(self, repository: IServiceTypeRepository):
+        self.repository = repository
+    
+    def get_service_types(self, limit: int = 10, offset: int = 0):
+        services = self.repository.get_service_types(limit, offset)
+        status = 200
+        return services, status
+    
+    def get_service_type(self, service_type_id: int):
+        service_type = self.repository.get_service_type(service_type_id)
+        status = 200
+        return service_type, status
+    
+    def create_service_type(self, service: ServiceType):
+        self.repository.add_service_type(service)
+        return service, 201
+    
+    def patch_service_type(self, service: ServiceType):
+        patch_service = self.repository.patch_service_type(service)
+        return patch_service, 200
+    
+    def put_service_type(self, service: ServiceType):
+        put_service = self.repository.put_service_type(service)
+        return put_service, 200
+    
+    def delete_service_type(self, service_id: int) -> tuple:
+        result = self.repository.delete_service_type(service_id)
+        if "deleted" in result.get("message", "").lower():
+            return result, 200
+        else:
+            return result, 404
+        
 def service_type_json(service_type):
     return {
         'service_type_id': service_type.service_type_id,

@@ -3,11 +3,42 @@ from db import get_db_connection
 from models.service import Service
 from datetime import datetime
 from logger_config import configure_logger
+from repository.service_repository import IServiceRepository
 import psycopg2
 
 
 app = Flask(__name__)
 logger = configure_logger()
+
+
+class Endpoints:
+    def __init__(self, repository: IServiceRepository):
+        self.repository = repository
+    
+    def get_services(self, limit: int = 10, offset: int = 0):
+        services = self.repository.get_services(limit, offset)
+        status = 200
+        return services, status
+    
+    def create_service(self, service: Service):
+        self.repository.add_service(service)
+        return service, 201
+    
+    def patch_service(self, service: Service):
+        patch_service = self.repository.patch_service(service)
+        return patch_service, 200
+    
+    def put_service(self, service: Service):
+        put_service = self.repository.put_service(service)
+        return put_service, 200
+    
+    def delete_service(self, service_id: int) -> tuple:
+        result = self.repository.delete_service(service_id)
+        if "deleted" in result.get("message", "").lower():
+            return result, 200
+        else:
+            return result, 404
+     
 
 def service_to_json(service):
     return {

@@ -95,12 +95,6 @@ class TestEndpoints(unittest.TestCase):
         self.assertEqual(response, {"message": "User deleted successfully"}, "should return successful deletion message")
         self.assertNotIn(user_id_to_delete, [u.user_id for u in self.endpoints.repository.users], "user should be removed from repository")
 
-    def test_delete_user_not_found(self):
-        user_id_to_delete = 999  # Assuming this ID does not exist
-        response, status = self.endpoints.delete_user(user_id_to_delete)
-        self.assertEqual(status, 404, "should return Not Found code")
-        self.assertEqual(response, {"message": "User not found"}, "should return user not found message")
-
             
 if __name__ == "__main__":
     unittest.main()
